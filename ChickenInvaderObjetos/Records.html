@@ -1,0 +1,140 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script type="text/javascript">
+        window.onload = function () {
+            document.addEventListener('storage', pintarDatos);
+            tabla = document.getElementById("tablaPosiciones");
+            document.getElementById("btEliminar").addEventListener("click",eliminarLocalStorage)
+            procesandoLocalStorage();
+        }
+        function eliminarLocalStorage() {
+            localStorage.clear();
+            arrayTrs = tabla.getElementsByTagName("tr");
+            for (var i = arrayTrs.length - 1; i >= 0; i--) {
+                tabla.removeChild(arrayTrs[i])
+            }
+        }
+
+        function procesandoLocalStorage() {
+            arrayContenido = new Array();
+            for (var i = 0; i < localStorage.length; i++) {
+                clave = localStorage.key(i);
+                valores = localStorage.getItem(clave);
+                valores = JSON.parse(valores);
+                arrayContenido.push(valores);
+            }
+            arrayContenido.sort(function (a, b) {
+                return a.time - b.time;
+            });
+            pintarDatos(arrayContenido);
+        }
+
+        function pintarDatos(arrayOrdenado) {
+            for (var i = 0; i < arrayOrdenado.length; i++) {
+                pos = i;
+                pos++; //Sumo 1 para que salgan apartir de 1 y no 0
+
+                //Añado el tr a pantalla y se asocian los elementos con su correspondiente
+                tr = document.createElement("tr");
+                if (pos == 1) {
+                    tr.style.color = "yellow";
+                }
+
+                crearCelda(tr, pos);
+                crearCelda(tr, arrayOrdenado[i].name);
+                crearCelda(tr, arrayOrdenado[i].time);
+                crearCelda(tr,arrayOrdenado[i].score)
+                crearCelda(tr, arrayOrdenado[i].lives);
+                crearCelda(tr, arrayOrdenado[i].dates);
+
+                tabla.appendChild(tr);
+            }
+        }
+        function crearCelda(padre,texto) {
+            var td = document.createElement("td");
+            var textP = document.createTextNode(texto);
+            td.appendChild(textP);
+            padre.appendChild(td);
+        }
+</script>
+    <style type="text/css">
+       *{
+           padding:0px;
+           margin:0px;
+       }
+       body{
+           background-image:url("Imagen/fondoReco.png");
+           background-size:cover;
+       }
+        table {
+            width: 70%;
+            color:#f4f4f4;
+            font-size:20px;
+            font-weight:bold;
+            margin: 1% auto 0;
+        }
+        th, td {padding:18px 28px 18px; text-align:center; }
+        td{
+            font-size:22px;
+        }
+        #cabecera{
+             font-size:35px;
+             color:#b1b1b1;
+             text-decoration:underline;
+        }
+        h1{
+            color:red;
+            font-size:50px;
+        }
+        .estiloBoton{
+            position:absolute;
+            border-radius:10px;
+            font-weight:bold;
+            font-size:30px;
+            opacity:0.85;
+            color:#f4f4f4;
+            text-decoration:none;
+            padding-left:10px;
+            padding-right:10px;
+        }
+        .fondoBotonAtrás{
+           background: linear-gradient(to left bottom, #030000,#0b00af);
+           top:5%;
+            left:3%;
+         }
+        .fondoBotonEliminar{
+           background: linear-gradient(to left bottom, black, #2351af);
+           top:90%;
+           border:none;
+           left:85%;
+        }
+        #volver:hover{
+            color:yellow;
+        }
+        #btEliminar:hover{
+            color:red;
+        }
+    </style>
+</head>
+<body>
+    <table id="tablaPosiciones" cellspacing="0">
+        <tr>
+            <th colspan="6"><h1>Hall of Fame</h1></th>
+        </tr>
+        <tr id="cabecera">
+            <th>Pos</th>
+            <th>Name</th>
+            <th>Time</th>
+            <th>Score</th>
+            <th>Lives</th>
+            <th>Date</th>
+        </tr>
+    </table>
+    <a href="index.html" class="estiloBoton fondoBotonAtrás" id="volver"><img src="Imagen/back.png" height="30" width="30" />Return</a>
+    <button class="estiloBoton fondoBotonEliminar" id="btEliminar"><img style="padding-top:5px" src="Imagen/papelera.png" height="30" width="30"/>Records</button>
+</body>
+</html>

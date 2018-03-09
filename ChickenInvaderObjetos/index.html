@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script type="text/javascript">
+        window.onload = function () {
+            anchoPantalla = window.innerWidth;
+            altoPantalla = window.innerHeight;
+            enlaceStart = document.getElementById("iniciar");
+            enlaceRecord = document.getElementById("record");
+
+            //Posicionamiento del enlace de comenzar
+            enlaceStart.style.left = 42 + "%";
+            enlaceStart.style.top = 60 + "%";
+
+            //Posicionamiento del enlace de récords
+			enlaceRecord.style.left = 45 + "%";
+			enlaceRecord.style.top = 70 + "%";
+        }
+
+    </script>
+    <style type="text/css">
+        body{
+            background-image: url("Imagen/fondoInicial.jpg");
+            background-size:cover;
+        }
+        .estiloBoton{
+            position:absolute;
+            border-radius:20px;
+            font-weight:bold;
+            font-size:40px;
+            opacity:0.85;
+            color:yellow;
+            text-decoration:none;
+            padding-left:10px;
+            padding-right:10px;
+            background: linear-gradient(to bottom right, black, #081fb6);
+        }
+        #iniciar:hover{
+            color:red;
+        }
+        #record:hover{
+            color:white;
+        }
+    </style>
+</head>
+<body>
+    <a href="War.html" class="estiloBoton" id="iniciar">Start Playing</a>
+	<a href="Records.html" class="estiloBoton" id="record">Records</a>
+</body>
+</html>

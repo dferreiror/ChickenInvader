@@ -1,0 +1,591 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script type="text/javascript">
+        window.onload = function () {
+            anchoPantalla = window.innerWidth;
+            altoPantalla = window.innerHeight;
+            var contenedorPuntos = document.getElementById("puntuacion");
+            contenedorPuntos.style.left = anchoPantalla - contenedorPuntos.offsetWidth + "px";
+
+            contenedorVidaMonstruo = document.getElementById("contenedorVidaMonstruo");
+            contenedorVidaMonstruo.style.visibility = "hidden";
+
+            //Inicialización de las variables
+            puntos = 0;
+            vidas = 3;
+            contador_s = 0;
+            contador_cents = 0;
+            extincionPollos = false;
+            arrayPollos = new Array();
+            arrayHuevos = new Array();
+            monstrou = 0;
+
+            //Creación de los objetos
+            pantalla = new Pantalla(anchoPantalla, altoPantalla); 
+            pantalla.crearPantalla();
+            nave = new Nave(40, 90);
+            nave.crearPosionar();
+            pollo = new Pollo(100, 2, 11);
+            pollo.crearPosicionar();
+
+            cronómetro = crónometro();
+            crono = document.getElementById("cronómetro");
+            crono.style.left = (anchoPantalla - crono.offsetWidth) / 2 + "px";
+            crono.style.top = 0 + "px";
+
+            //Se crea un huevo cada 1 segundo debajo de un pollo aleatorio
+            tirarHuevos = setInterval(function () { pantalla.crearHuevo(arrayPollos[Math.floor((Math.random() * (arrayPollos.length - 1)))]) }, 1000);
+            document.addEventListener("keydown", function (event) { nave.operacionesConTeclado(event, nave, pantalla) });
+            document.addEventListener("mousemove", function (event) { nave.moverConMouse(event, nave, pantalla) });
+            document.addEventListener("click", nave.disparar);
+            document.addEventListener("keyup", nave.dispararTeclado);
+        }
+            
+        //Objeto pantalla  
+        Pantalla = function (ancho, alto) {
+            this.alto = alto;
+            this.ancho = ancho;  
+        }
+  
+        Pantalla.prototype.crearPantalla = function () {
+            this.pantalla = document.getElementById("contenedor"); //se toma el elemento juego
+            //Se le das los valores de alto y ancho pasados por parámetros
+            this.pantalla.style.width = this.ancho + "px";
+            this.pantalla.style.height = this.alto + "px";
+            this.pantalla.style.backgroundImage = "url('Imagen/fondo.jpg')";
+        }
+        //Get y set de Pantalla
+        Pantalla.prototype.getAncho = function () { return this.pantalla.clientWidth };
+        Pantalla.prototype.getAlto = function () { return this.pantalla.clientHeight };
+        Pantalla.prototype.getElevacion = function () { return 35; }
+
+        //Añade un elemento a la pantalla
+        Pantalla.prototype.añadirElemento = function (elemento) { this.pantalla.appendChild(elemento); }
+        Pantalla.prototype.eliminarPollo = function (posPollo) { //Elimina el pollo de la pantalla y lo quita del array de pollos
+            arrayPollos[posPollo].parentNode.removeChild(arrayPollos[posPollo]);
+            arrayPollos.splice(posPollo, 1);
+        }
+        Pantalla.prototype.eliminarHuevo = function (posHuevo) {
+            arrayHuevos[posHuevo].parentNode.removeChild(arrayHuevos[posHuevo]);
+            arrayHuevos.splice(posHuevo, 1);
+        }
+        Pantalla.prototype.eliminarElemento = function (elemento) { this.pantalla.removeChild(elemento); } //Elimina el elemento de la pantalla
+
+        //Objeto nave
+        Nave = function (ancho,alto) {
+            this.ancho = ancho;
+            this.alto = alto;
+        }
+        Nave.prototype.crearPosionar = function () {
+            this.nave = document.getElementById("nave"); //se toma el elemento pelota
+            this.nave.style.width = this.ancho + "px";
+            this.nave.style.height = this.alto + "px";
+            //Se coloca la nave en la zona inferior-central del navegador
+            this.nave.style.top = (pantalla.getAlto() - this.alto - pantalla.getElevacion()) + "px";
+            this.nave.style.left = (pantalla.getAncho() - this.ancho) / 2 + "px";
+        }
+        //Geters y Seters del objeto nave
+        Nave.prototype.getVelocidad = function () { return 20; }
+        Nave.prototype.getLeft = function () { return parseInt(this.nave.style.left); }
+        Nave.prototype.setLeft = function (valor) { this.nave.style.left = valor + "px"; }
+        Nave.prototype.setTop = function (valor) { this.nave.style.top = valor + "px"; }
+        Nave.prototype.getTop = function () { return parseInt(this.nave.style.top); }
+        Nave.prototype.getAncho = function () { return this.nave.clientWidth; }
+        Nave.prototype.getAlto = function () { return this.nave.clientHeight; }
+
+        Nave.prototype.operacionesConTeclado = function (event,nave,pantalla) {
+            var evento = event || window.event;
+            var code = evento.keyCode;
+            if (code == 39) { //39 Derecha
+                if (nave.getLeft() < (pantalla.getAncho() - nave.getAncho())) {
+                    nave.setLeft(nave.getLeft() + nave.getVelocidad());
+                } else {
+                    nave.setLeft(pantalla.getAncho() - nave.getAncho());
+                }
+            } else if (code == 38) { //38: Arriba
+                if (nave.getTop() > contenedorVidas.offsetHeight) {
+                    nave.setTop(nave.getTop() - nave.getVelocidad());
+                } else {
+                    nave.setTop(contenedorVidas.offsetHeight);
+                }
+            } else if (code == 37) {                //37 Izquierda
+                if (nave.getLeft() > 0) {
+                    nave.setLeft(nave.getLeft() - nave.getVelocidad());
+                } else {
+                    nave.setLeft(0);
+                }
+            } else if (code == 40) { // 40: Abajo
+                if (nave.getTop() < (pantalla.getAlto() - nave.getAlto() - pantalla.getElevacion())) {
+                    nave.setTop(nave.getTop() + nave.getVelocidad());
+                } else {
+                    nave.setTop(pantalla.getAlto() - nave.getAlto() - pantalla.getElevacion());
+                }
+            } else if(code == 27){ // Si se pulsa ESC pregunta si se quiere reiniciar la partida.
+                var confirmar = confirm("¿Deseas reiniciar la partida?");
+                if (confirmar){// si pulsamos aceptar
+                    window.location.reload(); //reinicia la página
+                }    
+            }
+            nave.choqueConPollo(); //Comprueba el si el movimiento de la nave probocó un choque con algún pollo.
+        }
+
+        Nave.prototype.dispararTeclado = function (event) {
+            evento = event || window.event;
+            if (evento.keyCode == 32) { //Dispara si se presiona el espacio
+                nave.disparar();
+            }
+        }
+
+        Nave.prototype.choqueConPollo = function () {
+            for (var i = 0; i < arrayPollos.length; i++) {
+                //Se comprueba si la nave choca con alguno de los pollos que se encuentran vivos en ese momento.
+                if (nave.getLeft() <= (pollo.getAncho(arrayPollos[i]) + pollo.getLeft(arrayPollos[i])) &&
+                    pollo.getLeft(arrayPollos[i]) <= (nave.getLeft() + nave.getAncho()) &&
+                    nave.getTop() <= (pollo.getTop(arrayPollos[i]) + pollo.getAlto(arrayPollos[i])) &&
+                    pollo.getTop(arrayPollos[i]) <= (nave.getTop() + nave.getAlto())) {
+                        pantalla.eliminarPollo(i);//eliminar el pollo de la pantalla
+                        sumarPuntos(); // suma 100 puntos
+                        perderVidas(); //se ha producido un choque y se resta una vida
+                        break;
+                }
+            }
+            // CASO EXCEPCIONAL: Si la nave choca con el último pollo y aún le al menos una vida, gana la partida
+            if (arrayPollos.length == 0 && vidas != 0 && !extincionPollos) {
+                clearInterval(tirarHuevos);
+                extincionPollos = true;
+                monstrou = new Monstruo(300, 300).crearPosicionar();
+            }
+        }
+
+        //Mover la nave con el ratón
+        Nave.prototype.moverConMouse = function(event,nave,pantalla){
+            var evento = event || window.event;
+            nave.setLeft(evento.clientX);
+            nave.setTop(evento.clientY);
+            nave.choqueConPollo();// COMPROVACIÓN de choque con los pollos
+
+            //Limitando el movimiento de la nave
+            if ((nave.getLeft() + nave.getAncho()) >= pantalla.getAncho()) {//Borde derecho
+                nave.setLeft(pantalla.getAncho() - nave.getAncho());
+            } else if ((nave.getTop() + nave.getAlto() + pantalla.getElevacion()) >= pantalla.getAlto()) {//Borde abajo
+                nave.setTop(pantalla.getAlto() - pantalla.getElevacion() - nave.getAlto());
+            } else if ((nave.getLeft() - nave.getAncho()) <= 0) {//Borde izquierdo
+                nave.setLeft(0);
+            }else if(nave.getTop() <= contenedorVidas.offsetHeight){ //Límite superior
+                nave.setTop(contenedorVidas.offsetHeight);
+            }   
+        }
+        //Objeto Misil
+         function Misil(ancho, largo) {
+            this.ancho = ancho;
+            this.largo = largo;
+            this.altura=nave.getTop(); 
+            this.distancia=(nave.getLeft() + (nave.getAncho() / 2 - parseInt(this.ancho) / 2)); //Mitad del ancho de la nave
+            this.intervalo=0; //Inicializacón a 0
+         }
+
+         Misil.prototype.crearPosicionar = function () {
+             //Se crea el misil y se da las propiedades.
+            this.misil = document.createElement("div");
+            this.misil.style.width = this.ancho + "px";
+            this.misil.style.height = this.largo + "px";
+            this.misil.style.backgroundImage = "url('Imagen/misil.png')";
+            this.misil.style.backgroundSize = "cover";
+            this.misil.style.position = "absolute";
+            this.misil.style.left = this.distancia + "px";
+            this.misil.style.top =  this.altura+ "px";
+            pantalla.añadirElemento(this.misil);
+            //Cada objeto misil se mueve independiente
+            this.intervalo=setInterval(this.mover.bind(this),10); // se llama a cada 10 centésimas de segundo a la función mover del objeto misil
+        }
+        
+        //GETERS Y SETERS del misil
+        Misil.prototype.getTop = function () { return (this.altura); }
+        Misil.prototype.getLeft = function () { return (this.distancia);}
+        Misil.prototype.setTop = function (valor) { this.altura = valor; }
+        Misil.prototype.getAlto = function () { return parseInt(this.largo); }
+        Misil.prototype.getAncho = function () { return parseInt(this.ancho); }
+       
+        Nave.prototype.disparar = function () {
+            new Misil(30, 25).crearPosicionar();
+            disparo = new Audio("Audio/disparo.mp3");
+            disparo.play();
+        }
+        Misil.prototype.mover = function () {
+            if(this.getTop()>0){
+                this.setTop(this.getTop() - 5);
+                this.misil.style.top = this.getTop() + "px";
+                if (monstrou != 0) {
+                    //this.matarMonstruoDisparo();
+                } else {
+                    this.matarPolloDisparo();
+                    this.matarHuevoDisparo();
+                }
+            }   
+            else{
+                clearInterval(this.intervalo);
+                pantalla.eliminarElemento(this.misil);
+            }
+        }
+
+        Misil.prototype.matarPolloDisparo = function () {
+            for (var i = 0; i < arrayPollos.length; i++) {
+                //Comprobar el choque del misil con la parte inferior del pollo
+                if ((this.getLeft() + this.getAncho()) >= arrayPollos[i].offsetLeft &&
+                    this.getLeft() <= (arrayPollos[i].offsetLeft + parseInt(arrayPollos[i].style.width))) {
+                    if ((this.getTop() + this.getAlto()) >= (arrayPollos[i].offsetTop + parseInt(arrayPollos[i].style.height)) &&
+                        this.getTop() <= (arrayPollos[i].offsetTop + parseInt(arrayPollos[i].style.height))) {
+                        pantalla.eliminarPollo(i); //elimina el pollo
+                        clearInterval(this.intervalo); //elimina el movimiento del misil
+                        pantalla.eliminarElemento(this.misil); //lo saca de pantalla
+                        sumarPuntos(); 
+                        break;
+                    }
+                }
+            }
+            //GANA si ya no quedan pollo y la partida no había finalizado
+            if (arrayPollos.length == 0 && !extincionPollos) {
+                clearInterval(tirarHuevos);
+                extincionPollos = true;
+                monstrou = new Monstruo(300, 300).crearPosicionar();
+            }
+        }
+        /*Misil.prototype.matarMonstruoDisparo = function () {
+            if (this.getLeft() >= monstrou.offsetLeft &&
+                    this.getLeft() <= (monstrou.offsetLeft + monstrou.offsetWidth)) {
+                if (this.getTop() <= (monstrou.offsetTop + monstrou.offsetHeigth)) {
+                    aumentarBarra();
+                    sumarPuntos();
+                    alert("HILAAAAAAA")
+                }
+            }
+        }*/
+        Misil.prototype.matarHuevoDisparo = function () {
+            for (var i = 0; i < arrayHuevos.length; i++) {
+                if ((this.getLeft() + this.getAncho()) >= arrayHuevos[i].offsetLeft &&
+                    this.getLeft() <= (arrayHuevos[i].offsetLeft + parseInt(arrayHuevos[i].style.width))) {
+                    if ((this.getTop() + this.getAlto()) >= (arrayHuevos[i].offsetTop + parseInt(arrayHuevos[i].style.height)) &&
+                        this.getTop() <= (arrayHuevos[i].offsetTop + parseInt(arrayHuevos[i].style.height))) {
+                        clearInterval(this.intervalo);
+                        pantalla.eliminarElemento(this.misil);
+                        clearInterval(arrayHuevos[i].intervalo);
+                        pantalla.eliminarHuevo(i);
+                        sumarPuntos();
+                    }
+                }
+            }
+        }
+
+        //Crear el objeto pollo
+        Pollo = function (tamanoPollo,filas,columnas) {
+            this.tamanoPollo = tamanoPollo;
+            this.filas = filas;
+            this.columnas = columnas;
+        }
+        Pollo.prototype.crearPosicionar = function () {
+            //Esta variable es calculada de acuerdo al tamaño de la pantalla y la cantidad de pollos para que salgan en el centro 
+            var leftPantalla = (pantalla.getAncho() - (this.tamanoPollo * this.columnas)) / 2;
+            for (var i = 0; i < this.columnas; i++) { //Columnas 
+                for (var j = 0; j < this.filas;j++){ //Filas
+                    this.pollo = document.createElement("div");// crea el div para el bloque
+                    this.pollo.style.width = this.tamanoPollo + "px";//Se posicionan uno al lado del otro y se da la misma proporción
+                    this.pollo.style.backgroundImage = "url('Imagen/polloFiesta.png')";
+                    this.pollo.style.height = this.tamanoPollo + 10 + "px";
+                    this.pollo.style.position = "absolute";
+                    this.pollo.style.backgroundSize = "cover";
+                    this.pollo.style.top = (j * this.tamanoPollo) + 40 + "px";
+                    this.pollo.style.left = (i * this.tamanoPollo) + leftPantalla + "px";
+                    arrayPollos.push(this.pollo);
+                    pantalla.añadirElemento(this.pollo); //Añadir a la pantalla
+                }
+            }
+        }
+        //GETERS Y SETERS del pollo
+        Pollo.prototype.getTop = function (pollito) { return parseInt(pollito.style.top); }
+        Pollo.prototype.getLeft = function (pollito) { return parseInt(pollito.style.left); }
+        Pollo.prototype.getAlto = function (pollito) { return parseInt(pollito.style.height); }
+        Pollo.prototype.getAncho = function (pollito) { return parseInt(pollito.style.width); }
+
+        //Objeto huevo
+        Huevo = function (ancho, largo) {
+            this.ancho = ancho;
+            this.largo = largo;
+        }
+        Huevo.prototype.crearPosicionar = function (elementoPollo) {
+            this.huevo = document.createElement("div");// crea el div para el bloque
+            //Se posicionan uno al lado del otro y se da la misma proporción 
+            this.huevo.style.width = this.ancho + "px";
+            this.huevo.style.backgroundImage = "url('Imagen/huevoWhite.png')";
+            //absolute y cover del backgroundSize
+            this.huevo.style.height = this.largo + "px";
+            this.huevo.style.position = "absolute";
+            this.huevo.style.backgroundSize = "cover";
+            this.huevo.style.top = (pollo.getTop(elementoPollo) + pollo.getAlto(elementoPollo) + 5) + "px"; //debajo del pollo
+            this.huevo.style.left = pollo.getLeft(elementoPollo) + (pollo.getAncho(elementoPollo) / 2 - this.ancho / 2) + "px"; // en el centro del pollo
+            pantalla.añadirElemento(this.huevo);
+            this.huevo.intervalo = setInterval(this.mover.bind(this), 10); //Mover el huevo
+            arrayHuevos.push(this.huevo);
+        }
+        //GETERS Y SETERS del huevo
+        Huevo.prototype.getTop = function () { return parseInt(this.huevo.style.top); }
+        Huevo.prototype.getLeft = function () { return (parseInt(this.huevo.style.left)); }
+        Huevo.prototype.setTop = function (valor) { this.huevo.style.top = valor + "px"; }
+        Huevo.prototype.getAlto = function () { return parseInt(this.largo); }
+        Huevo.prototype.getAncho = function () { return parseInt(this.ancho); }
+
+        Pantalla.prototype.crearHuevo = function (pollito) {
+            new Huevo(15, 20).crearPosicionar(pollito);
+        }
+        Huevo.prototype.mover = function () {
+            var elevacion = altoPantalla - pantalla.getElevacion();
+            if (this.getTop() <= elevacion) { // SI aún no lleva al límite de la zona inferior puede moverse el huevo
+                this.setTop(this.getTop() + 5); // se mueve 5 pixeles cada vez
+                this.huevo.style.top = this.getTop() + "px"; //cambiar el top
+                this.matarNave(); //se comprueba si durante el trayecto choca con la nave
+            }
+            else{
+                clearInterval(this.huevo.intervalo); //se elimina el setInterval
+                this.huevo.style.width = 40 + "px";
+                this.huevo.style.height = 30 + "px";
+                this.huevo.style.backgroundImage = "url('Imagen/huevoRoto.png')"; //Se cambia la imagen por unos cascarones
+            }
+        }
+        Huevo.prototype.matarNave = function () {
+            //Comprobar si este huevo a chocado con la nave
+            if (nave.getLeft() <= (this.getAncho() + this.getLeft()) && this.getLeft() <= (nave.getLeft() + nave.getAncho()) &&
+                nave.getTop() <= (this.getTop() + this.getAlto()) && this.getTop() <= (nave.getTop() + nave.getAlto())) {
+                //Si ha chocado por eso:
+                perderVidas();
+                clearInterval(this.huevo.intervalo);
+                pantalla.eliminarElemento(this.huevo);
+            } 
+        }
+        Monstruo = function (ancho, alto) {
+            this.ancho = ancho;
+            this.alto = alto;
+        }
+        Monstruo.prototype.crearPosicionar = function () {
+            this.monstruo = document.createElement("div");// crea el div para el bloque
+            //Se posicionan uno al lado del otro y se da la misma proporción 
+            this.monstruo.style.width = this.ancho + "px";
+            this.monstruo.style.backgroundImage = "url('Imagen/polloSoldado.png')";
+            //absolute y cover del backgroundSize
+            this.monstruo.style.height = this.alto + "px";
+            this.monstruo.style.position = "absolute";
+            this.monstruo.style.backgroundSize = "cover";
+            this.monstruo.style.top = -this.alto + "px";
+            this.monstruo.style.left = (anchoPantalla - this.ancho) / 2 + "px"; // en el centro de la pantalla
+            this.monstruo.intervalo = setInterval(this.mover.bind(this), 10); //Mover el monstruo
+            pantalla.añadirElemento(this.monstruo);
+            return this.monstruo;
+        }
+
+        Monstruo.prototype.mover = function () {
+            if (monstrou.offsetTop <= (altoPantalla * 0.15)) { // SI aún no lleva al límite de la zona inferior puede moverse el huevo
+                monstrou.style.top = (monstrou.offsetTop + 1) + "px"; // se mueve 1 pixeles cada vez
+            }
+            else {
+                clearInterval(this.monstruo.intervalo); //se elimina el setInterval
+                crearVidaMonstruo();
+                finPartida("ganar");
+                eliminarCronómeto(cronómetro);
+                setTimeout(preguntarNombreJugador, 1500);
+                DJ("Audio/ganador.mp3");
+            }
+        }
+        function crearVidaMonstruo() {
+            contenedorVidaMonstruo.style.position = "absolute";
+            contenedorVidaMonstruo.style.top = 4 + "%";
+            contenedorVidaMonstruo.style.left = (anchoPantalla - contenedorVidaMonstruo.offsetWidth) / 2 + "px";
+            contenedorVidaMonstruo.style.visibility = "visible";
+        }
+
+        function sumarPuntos() { // Suma 100 puntos y actualiza la puntuación
+            puntos += 100;
+            document.getElementById("puntos").childNodes[0].nodeValue = puntos;
+        }
+
+        /*function aumentarBarra() {
+            var barraVida = document.getElementById("progVidaMonstruo");
+            barraVida.value = barraVida.value + 10;
+        }*/
+
+        function perderVidas() {
+            vidas--; //Resta vidas
+            document.getElementById("vidas").childNodes[0].nodeValue = vidas;//Actualiza
+            if (vidas == 0) { // Si no le quedan vidas
+                limpiarPantalla();
+                finPartida("perder");
+                clearInterval(tirarHuevos);// Ya no se quiere que se tiren más huevos
+                eliminarCronómeto(cronómetro);
+                setTimeout(reiniciarPartidaPregunta, 1500);
+                DJ("Audio/trompeta.mp3");
+            }
+
+        }
+        function limpiarPantalla() { // Elimina los pollos que quedaron sin matar porque la nave se ha quedado sin vida 
+            for (var i = 0; i < arrayPollos.length; i++) {
+                arrayPollos[i].parentNode.removeChild(arrayPollos[i]);
+            }
+        }
+        function finPartida(estado) {
+            if (estado == "ganar") {
+                foto = "url('Imagen/aplausoResized.gif')";
+            } else {
+                foto = "url('Imagen/gameOver.gif')";
+            }
+            var imagen = document.createElement("div");
+            imagen.style.backgroundImage = foto;
+            imagen.style.width = 530 + "px";
+            imagen.style.height = 400 + "px";
+            imagen.style.backgroundSize = "cover";
+            imagen.style.position = "absolute";
+            //Posicionamiento de la imagen en el centro del navegador 
+            imagen.style.left = (anchoPantalla - parseInt(imagen.style.width)) / 2 + "px";
+            imagen.style.top = (altoPantalla - parseInt(imagen.style.height)) / 2 + "px";
+            pantalla.añadirElemento(imagen);// Añadido a la pantalla
+        }
+        function crónometro() {
+            s = document.getElementById("segundos");
+            c = document.getElementById("centésimas")
+            var cronometro = setInterval(function () {
+                if (contador_cents == 99) { // si llega a 100 es porque ha pasado un segundo y se actualiza suma un segundo 
+                    contador_cents = 0;
+                    contador_s++;
+                    s.childNodes[0].nodeValue = contador_s;
+                }
+                c.childNodes[0].nodeValue = contador_cents;
+                contador_cents++;
+            }, 10);
+            return cronometro;
+        }
+
+        function eliminarCronómeto(crono) { //para el crono
+            clearInterval(crono);
+        }
+        function preguntarNombreJugador() {
+            var nombre = prompt("¿Cúal es tu nombre?");
+            if (nombre != null && nombre.length > 0) { //Escribe algo y le da aceptar
+                document.location.target = "_blank";
+                document.location.href = "./Records.html";
+                var f=new Date();
+                var fecha = f.getDate() + "/" + (f.getMonth()+1) + "/" + f.getFullYear();
+                localStorage.setItem(nombre, objetoValores(nombre,fecha));
+            } else {
+                reiniciarPartidaPregunta();
+            } 
+        }
+        function objetoValores(nombre,fecha) {
+            var jsObjeto = {};
+            jsObjeto.name = nombre;
+            jsObjeto.time = contador_s + "." + contador_cents;
+            jsObjeto.score = puntos;
+            jsObjeto.lives = vidas;
+            jsObjeto.dates = fecha;
+            return JSON.stringify(jsObjeto);
+        }
+        function reiniciarPartidaPregunta() {
+            var confirmar = confirm("Deseas reiniciar la partida?");
+            if (confirmar) {// si pulsamos aceptar
+                window.location.reload();
+            } else {
+                document.location.target = "_blank";
+                document.location.href = "./index.html";
+            }
+        }
+        function DJ(direccion) {
+            document.getElementById("audioFondo").pause();
+            var audio = document.createElement("audio");
+            audio.src = direccion;
+            audio.play();
+        }
+    </script>
+    <style type="text/css">
+        * {
+            padding: 0px;
+            margin: 0px;
+            cursor: none;
+        }
+        #nave {
+            position: absolute;
+        }
+        body {
+            overflow: hidden;
+        }
+        .contenedora{
+            background: linear-gradient(#181818, #000778, #181818);
+            position:absolute;
+            
+        }
+        #contenedorVidas{
+            border-top-right-radius: 25px;
+            width:120px;
+            height:35px;
+        }
+        #corazon{
+            height:35px;
+            width:35px;
+        }
+        .formatoLetra{
+            position:relative;
+            font-weight:bold;
+            color:#ebfe06;
+            font-size:20px;
+        }
+        .estiloLetraPuntos{
+            top:8px;
+            left:10px;
+        }
+        .estiloLetraVidas{
+            top:-10px;
+        }
+        #puntuacion{
+            border-top-left-radius: 25px;
+            width:120px;
+            height:35px;
+        }
+        .rojo{
+            color:red;
+        }
+        #cronómetro{
+            padding:2px;
+        }
+        #progVidaMonstruo{
+            height:30px;
+            width:300px;
+        }
+        progress::-moz-progress-bar { background: red; }
+        progress::-webkit-progress-value { background: red; }
+        progress { color: red; }
+        
+    </style>
+</head>
+<body>
+    <div id="contenedor">
+        <img id="nave" src="Imagen/nave.png" />
+        <div class="contenedora" id="contenedorVidas">
+            <span class="formatoLetra estiloLetraVidas">Lives:</span>
+            <img id="corazon" src="Imagen/corazon.gif" />
+            <span class="formatoLetra estiloLetraVidas" id="vidas">3</span>
+        </div>
+        <div class="contenedora" id="puntuacion">
+            <span class="formatoLetra estiloLetraPuntos">Points: </span>
+            <span class="formatoLetra estiloLetraPuntos rojo" id="puntos">0</span>
+        </div>
+        <div id="cronómetro" class="contenedora">
+            <p>
+                <span class="formatoLetra">Timer: </span><span id="segundos" class="formatoLetra">0</span><span class="rojo"> : </span>
+                <span class="formatoLetra" id="centésimas">0</span>
+            </p>
+        </div>
+    </div>
+    <div id="contenedorVidaMonstruo">
+        <span class="formatoLetra">Life of the monster</span><progress id="progVidaMonstruo" value="10" max="100"></progress>
+    </div>
+
+    <audio id="audioFondo" src="Audio/musicaFondo.mp3" autoplay loop></audio>
+</body>
+</html>

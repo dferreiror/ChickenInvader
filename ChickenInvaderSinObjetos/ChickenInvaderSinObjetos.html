@@ -1,0 +1,219 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script type="text/javascript">
+        window.onload = function () {
+            pantalla = document.getElementById("contenedor");
+            nave = document.getElementById("nave");
+            anchoNave = nave.offsetWidth;
+            altoNave = nave.offsetHeight;
+            anchoPantalla = window.innerWidth;
+            altoPantalla = window.innerHeight;
+            pantalla.style.width = anchoPantalla + "px";
+            pantalla.style.height = altoPantalla + "px";
+            pantalla.style.backgroundImage = "url('Imagen/fondo.jpg')";
+            
+            elevacion = 30;
+            nave.style.left = (anchoPantalla - anchoNave) / 2 + "px";
+            nave.style.top = (altoPantalla - (altoNave + elevacion)) + "px";
+            crearPollos();
+            document.addEventListener("keyup", dispararTeclado);
+            document.addEventListener("mousemove", moverNaveMouse);
+            document.addEventListener("click", disparar);
+            document.addEventListener("keydown", moverNaveTeclado);
+            arrayMisiles = new Array();
+        }
+        function moverNaveMouse(event) {
+            evento = event || window.event;
+            nave.style.left = evento.clientX + "px";
+            nave.style.top = evento.clientY + "px";
+            choqueNavePollo();
+            if ((evento.clientX + anchoNave) >= anchoPantalla) {//Borde derecho
+                nave.style.left = (anchoPantalla - anchoNave) + "px";
+            } else if ((evento.clientY + altoNave + elevacion) >= altoPantalla) {//Borde abajo
+                nave.style.top = (altoPantalla - elevacion - altoNave) + "px"; 
+            } else if ((evento.clientX - anchoNave) <= 0) {//Borde izquierdo
+                nave.style.left = 0 + "px";
+            } 
+        }
+        function disparar() {
+            var misil = document.createElement("div");
+            misil.style.width = 30 + "px";
+            misil.style.height = 25 + "px";
+            misil.style.backgroundImage = "url('Imagen/misil.png')";
+            misil.style.backgroundSize = "cover";
+            misil.style.position = "absolute";
+            misil.style.left = (parseInt(nave.style.left) + (nave.clientWidth / 2 - parseInt(misil.style.width) / 2)) + "px";
+            misil.style.top = parseInt(nave.style.top)  + "px";
+            pantalla.appendChild(misil);
+            idSetInterval = setInterval(function () { moverMisil(misil) }, 1);
+            arrayMisiles.push(idSetInterval);
+            misil.id = idSetInterval;
+        }
+        function moverMisil(misil) {
+            misil.style.top = (parseInt(misil.style.top) - 10) + "px";
+            matarPolloDisparo(misil);
+            if ((parseInt(misil.style.top) + parseInt(misil.style.height)) <= 0) {
+               eliminarProyectil(misil)
+            }
+        }
+        function eliminarProyectil(misil) {
+            for (var i = 0; i < arrayMisiles.length; i++) {
+                if(arrayMisiles[i] == misil.id){
+                    clearInterval(arrayMisiles[i]);
+                    arrayMisiles.splice(i, 1);
+                    document.getElementById(misil.id).parentNode.removeChild(document.getElementById(misil.id));
+                }
+            }
+        }
+        function dispararTeclado(event) {
+            evento = event || window.event;
+            if (evento.keyCode == 32) {
+                disparar();
+            }
+        }
+        function moverNaveTeclado(event) {
+            evento = event || window.event;
+            var code = evento.keyCode;
+            var leftNave = parseInt(nave.style.left);
+            var topNave = parseInt(nave.style.top);
+            var velocidadNave = 20;
+            if (code == 39 ){ //39 Derecha
+                if (leftNave < (anchoPantalla - anchoNave)) {
+                    nave.style.left = parseInt(nave.style.left) + velocidadNave + "px";
+                } else {
+                    nave.style.left = (anchoPantalla - anchoNave) + "px";
+                }
+            } else if (code == 38) { //38: Arriba
+                if (topNave > 0) {
+                    nave.style.top = parseInt(nave.style.top) - velocidadNave + "px";
+                } else {
+                    nave.style.top = 0 + "px";
+                }  
+            } else if (code == 37) {                //37 Izquierda
+                if (leftNave > 0) {
+                    nave.style.left = parseInt(nave.style.left) - velocidadNave + "px";
+                } else {
+                    nave.style.left = 0 + "px";
+                }
+            } else if (code == 40) { // 40: Abajo
+                if (topNave < (altoPantalla - altoNave - elevacion)) {
+                    nave.style.top = parseInt(nave.style.top) + velocidadNave + "px";
+                } else {
+                    nave.style.top = (altoPantalla - altoNave - elevacion) + "px";
+                } 
+            }
+            choqueNavePollo();
+        }
+        function crearPollos() {
+            arrayPollos = [];
+            bloqueSize = 100;
+            var leftPantalla = (anchoPantalla - (bloqueSize * 3)) / 2;
+            for (var i = 0; i <= 2; i++) { //Columnas 
+                var pollo = document.createElement("div");// crea el div para el bloque
+                //Se posicionan uno al lado del otro y se da la misma proporción 
+                pollo.style.width = bloqueSize + "px";
+                pollo.style.backgroundImage = "url('Imagen/polloSoldado.png')";
+                //absolute y cover del backgroundSize
+                pollo.style.height = bloqueSize + "px";
+                pollo.style.position = "absolute";
+                pollo.style.backgroundSize = "cover";
+                pollo.style.top = bloqueSize + 10 + "px";
+                pollo.style.left = (i * bloqueSize) + leftPantalla + "px";
+                arrayPollos.push(pollo);// se introduce los bloques dentro del array 
+                pantalla.appendChild(pollo);  //se muestran por pantalla los bloques
+            }
+        }
+        function inhabilitarControles() {
+            document.removeEventListener("keyup", dispararTeclado);
+            document.removeEventListener("mousemove", moverNaveMouse);
+            document.removeEventListener("click", disparar);
+            document.removeEventListener("keydown", moverNaveTeclado);
+        }
+        function matarPolloDisparo(proyectil) {
+            var leftMisil = parseInt(proyectil.style.left);
+            var topMisil = parseInt(proyectil.style.top);
+            var anchoMisil = parseInt(proyectil.style.width);
+            var altoMisil = parseInt(proyectil.style.height);
+            for (var i = 0; i < arrayPollos.length; i++) {
+                if ((leftMisil + anchoMisil) >= arrayPollos[i].offsetLeft && leftMisil <= (arrayPollos[i].offsetLeft + parseInt(arrayPollos[i].style.width))) {
+                    if ((topMisil + altoMisil) >= (arrayPollos[i].offsetTop + parseInt(arrayPollos[i].style.height)) && topMisil <= (arrayPollos[i].offsetTop + parseInt(arrayPollos[i].style.height))) {
+                        eliminarPolloPantalla(i);
+                        eliminarProyectil(proyectil);
+                        break;
+                    }
+                }
+            }
+            if(arrayPollos.length == 0){
+                finPartida("ganar");
+                limpiarPantalla();
+                inhabilitarControles();
+            }
+        }
+        function eliminarPolloPantalla(i) {
+            arrayPollos[i].parentNode.removeChild(arrayPollos[i]);
+            arrayPollos.splice(i, 1);
+        }
+        function choqueNavePollo() {
+            for (var i = 0; i < arrayPollos.length; i++) {
+                //Variables de top y left del bloque
+                var polloLeft = parseInt(arrayPollos[i].style.left);
+                var polloTop = parseInt(arrayPollos[i].style.top);
+                //Variables para controlar el borde derecho y el inferior 
+                var polloRight = polloLeft + parseInt(arrayPollos[i].offsetWidth);
+                var polloBottom = polloTop + parseInt(arrayPollos[i].offsetHeight);
+                if ((parseInt(nave.style.left) <= polloRight) && (polloLeft <= parseInt(nave.style.left) + nave.offsetWidth) &&
+                    (parseInt(nave.style.top) <= polloBottom) && (polloTop <= parseInt(nave.style.top) + nave.offsetHeight)) {
+                    inhabilitarControles();
+                    limpiarPantalla();
+                    finPartida("perder");
+                    break;
+                }
+            }
+        }
+        function limpiarPantalla() {
+            nave.parentNode.removeChild(nave);
+            for (var i = 0; i < arrayPollos.length; i++){
+                arrayPollos[i].parentNode.removeChild(arrayPollos[i]);
+            }
+        }
+        function finPartida(estado) {
+            if (estado == "ganar") {
+                foto = "url('Imagen/aplausoResized.gif')";
+            } else {
+                foto = "url('Imagen/gameOver.gif')";
+            }
+            var imagen = document.createElement("div");
+            imagen.style.backgroundImage = foto;
+            imagen.style.width = 530 + "px";
+            imagen.style.height = 400 + "px";
+            imagen.style.backgroundSize = "cover";
+            imagen.style.position = "absolute";
+            //Posicionamiento de la imagen en el centro del navegador 
+            imagen.style.left = (anchoPantalla - parseInt(imagen.style.width)) / 2 + "px";
+            imagen.style.top = (altoPantalla - parseInt(imagen.style.height)) / 2 + "px";
+            pantalla.appendChild(imagen);
+        }
+    </script>
+    <style type="text/css">
+        *{
+            padding:0px;
+            margin:0px;
+            cursor: none;
+        }
+        #nave{
+            position:absolute;
+        }
+        body {overflow:hidden; } 
+    </style>
+</head>
+<body>
+    <div id="contenedor">
+        <img id="nave" src="Imagen/nave.png" width="50" height="100"/>
+    </div>
+</body>
+</html>
+
